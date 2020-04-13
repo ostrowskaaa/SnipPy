@@ -1,8 +1,5 @@
-#   1. otwiera sie gui <WELCOME TO MY SNIPPY TOOL> -> opcje: NEW, SAVE, WORD, EXCEL
-#   2. zaznaczanie kursorem określonej części ekranu
 #   3. wyświetlić skórty klawiszowe na wejściu -> dlaczego nie są całe?
-#   4. snipping musi oddawać crop
-#   5. jak już będzie oddawał crop, trzeba zmienić produceText
+#   4. przerzucenie struktury na ios
 
 # ZROBIONE:
 #  - zapisywanie wycięcia jako png
@@ -17,7 +14,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtWidgets import QFileDialog
 from PyQt5 import QtGui, QtCore
 from PyQt5.QtGui import QIcon
-
+from PIL import Image
 import xlsxwriter
 
 import image_to_text
@@ -25,7 +22,7 @@ import mouse
 
 
 class SnipPyApp(QMainWindow):
-    def __init__(self):
+    def __init__(self, numpy_image=None):
         super().__init__()
 
         self.setWindowTitle('SnipPy')
@@ -60,10 +57,8 @@ class SnipPyApp(QMainWindow):
         self.setGeometry(450,300, 450, 300)
 
 
-
     # chosen part of the screen
-    import cv2
-    crop = cv2.imread('przyklad.png', 0)
+    crop = None
 
 
     # ------------ OPTIONS -----------
@@ -75,9 +70,10 @@ class SnipPyApp(QMainWindow):
                 print('saved')
 
     def new(self, crop):
-
-        # after snipping crop is given to produce text
-        image_to_text.produceText(crop)
+        captured = self.Snip.start()
+        if captured is not None:
+            crop = Image.open('output_image.png')
+            print("mamy")
 
 
     def word_function(self, crop):
