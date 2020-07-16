@@ -9,8 +9,6 @@ from PIL import ImageGrab
 import numpy as np
 import cv2
 
-import main
-
 ###############  MAKE A CROP  ########################
 
 class Crop(QMainWindow):
@@ -28,7 +26,8 @@ class Crop(QMainWindow):
         self.begin = QtCore.QPoint()
         self.end = QtCore.QPoint()
         Crop.is_working = True
-        self.setWindowOpacity(0.3)
+        self.setWindowOpacity(0.45)
+        self.showFullScreen()
         QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.CrossCursor))
 
     def paintEvent(self, event):
@@ -61,6 +60,7 @@ class Crop(QMainWindow):
 
         self.repaint()
         QApplication.processEvents()
+        self.setWindowOpacity(0)
         capturedImage = ImageGrab.grab(bbox=(x_start, y_start, x_end, y_end))
         QApplication.processEvents()
         capturedImage = cv2.cvtColor(np.array(capturedImage), cv2.COLOR_BGR2RGB)

@@ -131,8 +131,8 @@ class Tables():
                         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 1))
                         border = cv2.copyMakeBorder(finalimg,2,2,2,2,   cv2.BORDER_CONSTANT,value=[255,255])
                         resizing = cv2.resize(border, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
-                        dilation = cv2.dilate(resizing, kernel,iterations=1)
-                        erosion = cv2.erode(dilation, kernel,iterations=1)
+                        dilation = cv2.dilate(resizing, kernel, iterations=1)
+                        erosion = cv2.erode(dilation, kernel, iterations=1)
 
                         out = pytesseract.image_to_string(erosion)
                         if(len(out)==0):
@@ -143,4 +143,5 @@ class Tables():
         arr = np.array(outer)
         dataframe = pd.DataFrame(arr.reshape(len(row),countcol))
         data = dataframe.style.set_properties(align='left')
-        data.to_excel(path)
+
+        data.to_excel(path, index=False, header=False)

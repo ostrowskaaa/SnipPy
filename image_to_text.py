@@ -8,7 +8,7 @@ import numpy as np
 from docx import Document
 from docx.shared import Inches
 
-import SnipPy
+import main
 import detect_tables
 
 

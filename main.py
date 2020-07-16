@@ -15,7 +15,7 @@ from PyQt5.QtGui import QIcon, QPixmap, QImage, QFont
 import xlsxwriter
 
 import tkinter as tk
-from PIL import ImageGrab
+from PIL import ImageGrab, Image
 import numpy as np
 import cv2
 
@@ -38,31 +38,36 @@ class MainApp(QMainWindow):
         self.layout = QHBoxLayout()
         self.toolbar = self.addToolBar('toolbar')
 
-        newCrop = QAction(QIcon('icons/new.png'), 'new', self)
+        newCrop = QAction(QIcon('icons/new.png'), 'New', self)
         newCrop.setShortcut('Ctrl+N')
         newCrop.triggered.connect(self.hideMainWindow)
 
-        saveJPG = QAction(QIcon('icons/save.png'), 'save', self)
+        load = QAction(QIcon('icons/load.png'), 'Load', self)
+        load.setShortcut('Ctrl+O')
+        load.triggered.connect(self.loadFunction)
+
+        saveJPG = QAction(QIcon('icons/save.png'), 'Save', self)
         saveJPG.setShortcut('Ctrl+S')
         saveJPG.triggered.connect(self.saveFunction)
 
-        word = QAction(QIcon('icons/word.png'), 'word', self)
+        word = QAction(QIcon('icons/word.png'), 'Word', self)
         word.setShortcut('Ctrl+W')
         word.triggered.connect(self.wordFunction)
 
-        excel = QAction(QIcon('icons/excel.png'), 'excel', self)
+        excel = QAction(QIcon('icons/excel.png'), 'Excel', self)
         excel.setShortcut('Ctrl+E')
         excel.triggered.connect(self.excelFunction)
 
 
         self.toolbar.addAction(newCrop)
+        self.toolbar.addAction(load)
         self.toolbar.addAction(saveJPG)
         self.toolbar.addAction(word)
         self.toolbar.addAction(excel)
 
 
         myQWidget.setLayout(self.layout)
-        self.setStyleSheet('background-color: #ADD8E6;')
+        self.setStyleSheet('background-color: white;')
         self.setCentralWidget(myQWidget)
         self.setWindowIcon(QIcon('icons/logo.png'))
         self.setWindowTitle('SnipPy')
@@ -71,9 +76,9 @@ class MainApp(QMainWindow):
 
 
         self.welcome_info = QLabel(myQWidget)
-        self.welcome_info.setText('ctrl+N = new crop\nctrl+S = save as jpg\nctrl+w = save in word\nctrl+e = save in excel\nesc = exit')
+        self.welcome_info.setText('ctrl + N = new crop\nctrl + O = load image\nctrl + S = save as jpg\nctrl + W = save in word\nctrl + E = save in excel\nesc = exit')
         self.welcome_info.setFont(QFont('Arial', 10, QFont.Black))
-        self.welcome_info.move(30, 60)
+        self.welcome_info.move(10, 10)
         self.welcome_info.adjustSize()
 
 ###################  FUNCTIONS  ######################
@@ -95,7 +100,17 @@ class MainApp(QMainWindow):
         self.welcome_info.adjustSize()
         self.welcome_info.move(0, 0)
         self.welcome_info.setStyleSheet('padding :15px')
-        self.resize(qImage.width(), qImage.height() + self.toolbar.height())
+        self.resize(qImage.width() + 30, qImage.height() + self.toolbar.height() + 30)
+
+    def loadFunction(self):
+        path, _ = QFileDialog.getOpenFileName(self, 'Open File', '', 'Image files (*.jpg *.png)')
+        self.crop = cv2.imread(path)
+        img = QImage(path)
+        self.welcome_info.setPixmap(QPixmap.fromImage(img))
+        self.welcome_info.adjustSize()
+        self.welcome_info.move(0, 0)
+        self.welcome_info.setStyleSheet('padding :15px')
+        self.resize(img.width() + 30, img.height() + self.toolbar.height() + 30)
 
     def saveFunction(self, crop):
         if self.crop is not None:
