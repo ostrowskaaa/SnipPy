@@ -8,7 +8,8 @@
 import sys, os
 from PyQt5.QtWidgets import *
 from PyQt5 import QtGui, QtCore
-from PyQt5.QtGui import QIcon, QPixmap, QImage, QFont
+from PyQt5.QtGui import QIcon, QPixmap, QImage, QFont, QPainter, QPen, QBrush
+from PyQt5.QtCore import Qt, QPoint
 
 import xlsxwriter
 
@@ -30,7 +31,9 @@ class MainApp(QMainWindow):
 ######################################################
 
         self.crop = None
-        self.visibility = False
+        self.drawing = False
+        self.lastPoint = QPoint()
+        self.run = False
 
 ######################################################
 
@@ -38,44 +41,45 @@ class MainApp(QMainWindow):
         self.layout = QHBoxLayout()
         self.toolbar = self.addToolBar('toolbar')
 
-        newCrop = QAction(QIcon('icons/new.png'), 'New', self)
-        newCrop.setShortcut('Ctrl+N')
-        newCrop.triggered.connect(self.makeCropFunction)
+        self.newCrop = QAction(QIcon('icons/new.png'), 'New', self)
+        self.newCrop.setShortcut('Ctrl+N')
+        self.newCrop.triggered.connect(self.makeCropFunction)
 
-        load = QAction(QIcon('icons/load.png'), 'Load', self)
-        load.setShortcut('Ctrl+O')
-        load.triggered.connect(self.loadFunction)
+        self.load = QAction(QIcon('icons/load.png'), 'Load', self)
+        self.load.setShortcut('Ctrl+O')
+        self.load.triggered.connect(self.loadFunction)
 
-        saveJPG = QAction(QIcon('icons/save.png'), 'Save', self)
-        saveJPG.setShortcut('Ctrl+S')
-        saveJPG.triggered.connect(self.saveFunction)
+        self.saveJPG = QAction(QIcon('icons/save.png'), 'Save', self)
+        self.saveJPG.setShortcut('Ctrl+S')
+        self.saveJPG.triggered.connect(self.saveFunction)
 
-        word = QAction(QIcon('icons/word.png'), 'Word', self)
-        word.setShortcut('Ctrl+W')
-        word.triggered.connect(self.wordFunction)
+        self.word = QAction(QIcon('icons/word.png'), 'Word', self)
+        self.word.setShortcut('Ctrl+W')
+        self.word.triggered.connect(self.wordFunction)
 
-        excel = QAction(QIcon('icons/excel.png'), 'Excel', self)
-        excel.setShortcut('Ctrl+E')
-        excel.triggered.connect(self.excelFunction)
+        self.excel = QAction(QIcon('icons/excel.png'), 'Excel', self)
+        self.excel.setShortcut('Ctrl+E')
+        self.excel.triggered.connect(self.excelFunction)
 
-        marker = QAction(QIcon('icons/marker.png'), 'Marker', self)
-        marker.triggered.connect(self.markerFunction)
+        self.marker = QAction(QIcon('icons/marker.png'), 'Marker', self)
+        self.marker.triggered.connect(self.markerFunction)
+
+        self.toolbar.addAction(self.newCrop)
+        self.toolbar.addAction(self.load)
+        self.toolbar.addAction(self.saveJPG)
+        self.toolbar.addAction(self.word)
+        self.toolbar.addAction(self.excel)
+        self.toolbar.addAction(self.marker)
 
 
-        self.toolbar.addAction(newCrop)
-        self.toolbar.addAction(load)
-        self.toolbar.addAction(saveJPG)
-        self.toolbar.addAction(word)
-        self.toolbar.addAction(excel)
-        self.toolbar.addAction(marker)
-
-
-        undo = QAction(QIcon('icons/undo.png'), 'Undo', self)
-        undo.triggered.connect(self.undoFunction)
-        redo = QAction(QIcon('icons/redo.png'), 'Redo', self)
-        redo.triggered.connect(self.redoFunction)
-        self.toolbar.addAction(undo)
-        self.toolbar.addAction(redo)
+        self.undo = QAction(QIcon('icons/undo.png'), 'Undo', self)
+        self.undo.triggered.connect(self.undoFunction)
+        self.redo = QAction(QIcon('icons/redo.png'), 'Redo', self)
+        self.redo.triggered.connect(self.redoFunction)
+        self.toolbar.addAction(self.undo)
+        self.toolbar.addAction(self.redo)
+        self.undo.setVisible(False)
+        self.redo.setVisible(False)
 
 
         myQWidget.setLayout(self.layout)
@@ -85,7 +89,6 @@ class MainApp(QMainWindow):
         self.setWindowTitle('SnipPy')
         self.setGeometry(450, 300, 450, 300)
         self.setMinimumSize(450, 300)
-
 
         self.welcome_info = QLabel(myQWidget)
         self.welcome_info.setText('ctrl + N = new crop\nctrl + O = load image\nctrl + S = save as jpg\nctrl + W = save in word\nctrl + E = save in excel\nesc = exit')
@@ -150,12 +153,44 @@ class MainApp(QMainWindow):
             else:
                 raise OSError('No directory')
 
+### MARKER ###
     def markerFunction(self):
         if self.crop is not None:
-            self.visibility = True
-            marker.Marker.img(self, self.crop)
+            height, width, rgb = self.crop.shape
+            bytesPerLine = 3 * width
+            self.crop = QImage(self.crop.data, width, height, bytesPerLine, QImage.Format_RGB888).rgbSwapped()
+            self.undo.setVisible(True)
+            self.redo.setVisible(True)
+            self.run = True
         else:
             raise OSError('No image')
+
+    def mousePressEvent(self, event):
+        if self.run:
+            if event.button() == Qt.LeftButton:
+                self.drawing = True
+                self.lastPoint = event.pos()
+
+    def mouseMoveEvent(self, event):
+        if self.run:
+            if(event.buttons() & Qt.LeftButton) & self.drawing:
+                painter = QPainter(self.crop)
+                painter.setPen(QPen(Qt.yellow, 7, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))   # 7 = brush size
+                painter.drawLine(self.lastPoint, event.pos())
+                self.lastPoint = event.pos()
+                self.update()
+
+    def mouseReleaseEvent(self, event):
+        if self.run:
+            if event.button() == Qt.LeftButton:
+                self.drawing = False
+
+    def paintEvent(self, event):
+        if self.run:
+            canvasPainter  = QPainter(self)
+            canvasPainter.drawImage(0, self.crop, self.crop.rect())
+###########################################################################
+
 
     def undoFunction(self):
         print('undo')
@@ -166,7 +201,6 @@ class MainApp(QMainWindow):
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_Escape:
             self.close()
-
 
 ###################  START THE APP  ##########################
 
