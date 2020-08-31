@@ -114,8 +114,10 @@ class MainApp(QMainWindow):
         if self.crop is not None:
             path, _ = QFileDialog.getSaveFileName(self, 'Choose directory', '', '*.docx')
             try:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
                 image_to_text.textToWord(path, self.crop)
                 # open word
+                QApplication.restoreOverrideCursor()
                 os.startfile(path)
             except OSError:
                 pass
@@ -124,10 +126,12 @@ class MainApp(QMainWindow):
         if self.crop is not None:
             path, _ = QFileDialog.getSaveFileName(self, 'Choose directory', '', '*.xlsx')
             try:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
                 temporary_excel_file = xlsxwriter.Workbook(path)
                 temporary_excel_file.close()
                 image_to_text.textToExcel(path, self.crop)
                 # open excel
+                QApplication.restoreOverrideCursor()
                 os.startfile(path)
             except OSError:
                 pass
