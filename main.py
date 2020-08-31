@@ -1,8 +1,6 @@
 #  do naprawy:
 #  1. marker żółty
 #  2. kułeczko w trakcie przetwarzania
-#  *3. rysowanie tabeli
-#  4. poprawienie jakości rozpoznawania tekstu
 #  5. błąd kiedy raz się kliknie, a nie narysuje się prostokąta
 
 import sys, os
@@ -23,20 +21,12 @@ import image_to_text
 import marker
 
 ##############  SAVE CROP AND MAIN WINDOW  #################
-
 class MainApp(QMainWindow):
     def __init__(self):
         super(MainApp, self).__init__()
 
-######################################################
-
         self.crop = None
-        self.drawing = False
-        self.lastPoint = QPoint()
-        self.run = False
-
 ######################################################
-
         myQWidget = QWidget()
         self.layout = QHBoxLayout()
         self.toolbar = self.addToolBar('toolbar')
@@ -71,17 +61,6 @@ class MainApp(QMainWindow):
         self.toolbar.addAction(self.excel)
         self.toolbar.addAction(self.marker)
 
-
-        self.undo = QAction(QIcon('icons/undo.png'), 'Undo', self)
-        self.undo.triggered.connect(self.undoFunction)
-        self.redo = QAction(QIcon('icons/redo.png'), 'Redo', self)
-        self.redo.triggered.connect(self.redoFunction)
-        self.toolbar.addAction(self.undo)
-        self.toolbar.addAction(self.redo)
-        self.undo.setVisible(False)
-        self.redo.setVisible(False)
-
-
         myQWidget.setLayout(self.layout)
         self.setStyleSheet('background-color: white;')
         self.setCentralWidget(myQWidget)
@@ -97,20 +76,17 @@ class MainApp(QMainWindow):
         self.welcome_info.adjustSize()
 
 ###################  FUNCTIONS  ######################
-
     def makeCropFunction(self):
         self.hide()
         self.ShowCropWindow = makeCrop.Crop(self)
         self.ShowCropWindow.show()
 
     def convertNumpyImg(self, npImg):
-        height, width, rgb = npImg.shape
-        bytesPerLine = 3 * width
-        return QPixmap(QImage(npImg.data, width, height, bytesPerLine, QImage.Format_RGB888).rgbSwapped())
+        return QImage(npImg.data, npImg.shape[1], npImg.shape[0], npImg.strides[0], QImage.Format_RGB888).rgbSwapped()
 
-    def displayImage(self, image):
-        self.crop = image
-        qImage = QImage(image.data, image.shape[1], image.shape[0], image.strides[0], QImage.Format_RGB888).rgbSwapped()
+    def displayImage(self, npImg):
+        self.crop = npImg
+        qImage = MainApp.convertNumpyImg(self, self.crop)
         self.welcome_info.setPixmap(QPixmap.fromImage(qImage))
         self.welcome_info.adjustSize()
         self.welcome_info.move(0, 0)
@@ -124,7 +100,7 @@ class MainApp(QMainWindow):
 
     def saveFunction(self, crop):
         if self.crop is not None:
-            crop = MainApp.convertNumpyImg(self, self.crop)
+            crop = QPixmap(MainApp.convertNumpyImg(self, self.crop))
             file_path, _ = QFileDialog.getSaveFileName(self, 'Save as image', '', '*.png')
             if file_path:
                 crop.save(file_path)
@@ -153,57 +129,24 @@ class MainApp(QMainWindow):
             else:
                 raise OSError('No directory')
 
-### MARKER ###
-    def markerFunction(self):
-        if self.crop is not None:
-            height, width, rgb = self.crop.shape
-            bytesPerLine = 3 * width
-            self.crop = QImage(self.crop.data, width, height, bytesPerLine, QImage.Format_RGB888).rgbSwapped()
-            self.undo.setVisible(True)
-            self.redo.setVisible(True)
-            self.run = True
-        else:
-            raise OSError('No image')
-
-    def mousePressEvent(self, event):
-        if self.run:
-            if event.button() == Qt.LeftButton:
-                self.drawing = True
-                self.lastPoint = event.pos()
-
-    def mouseMoveEvent(self, event):
-        if self.run:
-            if(event.buttons() & Qt.LeftButton) & self.drawing:
-                painter = QPainter(self.crop)
-                painter.setPen(QPen(Qt.yellow, 7, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))   # 7 = brush size
-                painter.drawLine(self.lastPoint, event.pos())
-                self.lastPoint = event.pos()
-                self.update()
-
-    def mouseReleaseEvent(self, event):
-        if self.run:
-            if event.button() == Qt.LeftButton:
-                self.drawing = False
-
-    def paintEvent(self, event):
-        if self.run:
-            canvasPainter  = QPainter(self)
-            canvasPainter.drawImage(0, self.crop, self.crop.rect())
-###########################################################################
-
-
-    def undoFunction(self):
-        print('undo')
-
-    def redoFunction(self):
-        print('redo')
-
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_Escape:
             self.close()
 
-###################  START THE APP  ##########################
+### MARKER ###
+    def markerFunction(self):
+        if self.crop is not None:
+            self.image = MainApp.convertNumpyImg(self, self.crop)
+            self.image = marker.Marker(self, self.image)
+            self.image.show()
+        else:
+            raise OSError('No image')
 
+    def displayMarkeredImg(self, markeredImg):
+        self.crop = markeredImg
+        MainApp.displayImage(self, markeredImg)
+
+###################  START THE APP  ##########################
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     main = MainApp()
