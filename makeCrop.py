@@ -4,7 +4,6 @@ from PyQt5.QtWidgets import QFileDialog
 from PyQt5 import QtGui, QtCore
 from PyQt5.QtGui import QIcon, QPixmap, QImage
 
-import tkinter as tk
 from PIL import ImageGrab
 import numpy as np
 import cv2
@@ -14,15 +13,12 @@ import cv2
 class Crop(QMainWindow):
     is_working = False
 
-    def __init__(self,parent):
+    def __init__(self,parent, width, height):
         super(Crop, self).__init__(parent)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
-        root = tk.Tk()
         cropWidget = QWidget()
-        screen_width = root.winfo_screenwidth()
-        screen_height = root.winfo_screenheight()
-        self.setGeometry(0, 0, screen_width, screen_height)
+        self.setGeometry(0, 0, width, height)
         self.begin = QtCore.QPoint()
         self.end = QtCore.QPoint()
         Crop.is_working = True

@@ -19,8 +19,12 @@ import marker
 class MainApp(QMainWindow):
     def __init__(self):
         super(MainApp, self).__init__()
+        global app
 
         self.crop = None
+
+        self.screen_resolution = app.desktop().screenGeometry()
+        self.width, self.height = self.screen_resolution.width(), self.screen_resolution.height()
 ######################################################
         myQWidget = QWidget()
         self.layout = QHBoxLayout()
@@ -73,7 +77,7 @@ class MainApp(QMainWindow):
 ###################  FUNCTIONS  ######################
     def makeCropFunction(self):
         self.hide()
-        self.ShowCropWindow = makeCrop.Crop(self)
+        self.ShowCropWindow = makeCrop.Crop(self, self.width, self.height)
         self.ShowCropWindow.show()
 
     def convertToQimage(self, npImg):
@@ -98,7 +102,7 @@ class MainApp(QMainWindow):
         if self.crop is not None:
             crop = QPixmap(self.convertToQimage(self.crop))
             file_path, _ = QFileDialog.getSaveFileName(self, 'Save as image', '', '*.png')
-            if path:
+            if file_path:
                 crop.save(file_path)
 
     def wordFunction(self, crop):

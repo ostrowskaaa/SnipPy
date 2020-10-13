@@ -23,19 +23,18 @@ class Marker(QMainWindow):
         self.brushColor = QColor(255, 255, 0, 70)
         self.lastPoint = QPoint()
 
-        mainMenu = self.menuBar()
+        mainMenu = self.addToolBar('toolbar')
 
         saveAction = QAction(QIcon('icons/save.png'), 'Save',self)
         saveAction.setShortcut('Ctrl+S')
         mainMenu.addAction(saveAction)
         saveAction.triggered.connect(self.save)
 
-        clearAction = QAction(QIcon('icons/clear.png'), 'Clear', self)
-        clearAction.setShortcut('Ctrl+C')
+        clearAction = QAction(QIcon(), 'Clear', self)
         mainMenu.addAction(clearAction)
         clearAction.triggered.connect(self.clear)
 
-        fivepxAction = QAction(QIcon('icons/fivepx.png'), '5px', self)
+        fivepxAction = QAction(QIcon(), '5px', self)
         mainMenu.addAction(fivepxAction)
         fivepxAction.triggered.connect(self.fivePixel)
 
