@@ -1,8 +1,3 @@
-#  do naprawy:
-#  1. marker żółty
-#  2. kułeczko w trakcie przetwarzania
-#  5. błąd kiedy raz się kliknie, a nie narysuje się prostokąta
-
 import sys, os
 from PyQt5.QtWidgets import *
 from PyQt5 import QtGui, QtCore
@@ -86,7 +81,7 @@ class MainApp(QMainWindow):
 
     def displayImage(self, npImg):
         self.crop = npImg
-        qImage = MainApp.convertToQimage(self, self.crop)
+        qImage = self.convertToQimage(self.crop)
         self.welcome_info.setPixmap(QPixmap.fromImage(qImage))
         self.welcome_info.adjustSize()
         self.welcome_info.move(0, 0)
@@ -95,46 +90,38 @@ class MainApp(QMainWindow):
 
     def loadFunction(self):
         path, _ = QFileDialog.getOpenFileName(self, 'Open File', '', 'Image files (*.jpg *.png)')
-        try:
+        if path:
             self.crop = cv2.imread(path)
-            MainApp.displayImage(self, self.crop)
-        except OSError:
-            pass
+            self.displayImage(self.crop)
 
     def saveFunction(self, crop):
         if self.crop is not None:
-            crop = QPixmap(MainApp.convertToQimage(self, self.crop))
+            crop = QPixmap(self.convertToQimage(self.crop))
             file_path, _ = QFileDialog.getSaveFileName(self, 'Save as image', '', '*.png')
-            try:
+            if path:
                 crop.save(file_path)
-            except OSError:
-                pass
 
     def wordFunction(self, crop):
         if self.crop is not None:
             path, _ = QFileDialog.getSaveFileName(self, 'Choose directory', '', '*.docx')
-            try:
+            if path:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 image_to_text.textToWord(path, self.crop)
                 # open word
-                QApplication.restoreOverrideCursor()
                 os.startfile(path)
-            except OSError:
-                pass
+                QApplication.restoreOverrideCursor()
 
     def excelFunction(self, crop):
         if self.crop is not None:
             path, _ = QFileDialog.getSaveFileName(self, 'Choose directory', '', '*.xlsx')
-            try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+            if path:
+                #QApplication.setOverrideCursor(Qt.WaitCursor)
                 temporary_excel_file = xlsxwriter.Workbook(path)
                 temporary_excel_file.close()
                 image_to_text.textToExcel(path, self.crop)
                 # open excel
-                QApplication.restoreOverrideCursor()
                 os.startfile(path)
-            except OSError:
-                pass
+                #QApplication.restoreOverrideCursor()
 
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_Escape:
@@ -142,20 +129,18 @@ class MainApp(QMainWindow):
 
 ### MARKER ###
     def markerFunction(self):
-        try:
-            if self.crop is not None:
-                self.image = MainApp.convertToQimage(self, self.crop)
-                self.image = marker.Marker(self, self.image)
-                self.image.show()
-        except OSError:
-            pass
+        if self.crop is not None:
+            self.image = self.convertToQimage(self.crop)
+            self.image = marker.Marker(self, self.image)
+            self.image.show()
 
     def displayMarkeredImg(self, markeredImg):
         self.crop = markeredImg
-        MainApp.displayImage(self, markeredImg)
+        self.displayImage(markeredImg)
 
 ###################  START THE APP  ##########################
 if __name__ == '__main__':
+    QApplication.setStyle('Fusion')
     app = QApplication(sys.argv)
     main = MainApp()
     main.show()

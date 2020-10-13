@@ -64,7 +64,7 @@ class Crop(QMainWindow):
         capturedImage = ImageGrab.grab(bbox=(x_start, y_start, x_end, y_end))
         QApplication.processEvents()
         capturedImage = cv2.cvtColor(np.array(capturedImage), cv2.COLOR_BGR2RGB)
-        save = cv2.imwrite('captured_image.png', capturedImage)
+        #save = cv2.imwrite('captured_image.png', capturedImage)
         self.parent().displayImage(capturedImage)
         self.close()
         self.parent().show()

@@ -4,6 +4,7 @@ from PyQt5 import QtGui, QtCore
 from PyQt5.QtGui import QIcon, QPixmap, QImage, QFont, QPainter, QPen, QBrush, QColor
 from PyQt5.QtCore import Qt, QPoint
 import cv2 as cv2
+import numpy as np
 
 class Marker(QMainWindow):
     def __init__(self, parent, image):
@@ -13,16 +14,13 @@ class Marker(QMainWindow):
         self.setWindowTitle('Marker')
         self.setWindowIcon(QIcon('icons/marker.png'))
 
-        self.image = image
-        self.display = QLabel(myQwidget)
-        self.display.setPixmap(QPixmap.fromImage(self.image))
-        self.display.move(0,0)
-        self.display.setStyleSheet('padding:15px')
+        self.original_image = image.copy()
+        self.image = image.copy()
         self.resize(self.image.width(), self.image.height())
 
         self.drawing = False
         self.brushSize = 15
-        self.brushColor = QColor(255, 255, 0, 10)
+        self.brushColor = QColor(255, 255, 0, 70)
         self.lastPoint = QPoint()
 
         mainMenu = self.menuBar()
@@ -45,9 +43,9 @@ class Marker(QMainWindow):
         mainMenu.addAction(ninepxAction)
         ninepxAction.triggered.connect(self.ninePixel)
 
-        fifeteenpxAction = QAction(QIcon(), '15px', self)
-        mainMenu.addAction(fifeteenpxAction)
-        fifeteenpxAction.triggered.connect(self.fifeteenPixel)
+        fifteenpxAction = QAction(QIcon(), '15px', self)
+        mainMenu.addAction(fifteenpxAction)
+        fifteenpxAction.triggered.connect(self.fifteenPixel)
 
         redAction = QAction(QIcon('icons/red.png'), 'Red', self)
         mainMenu.addAction(redAction)
@@ -86,8 +84,8 @@ class Marker(QMainWindow):
         self.close()
 
     def clear(self):
-        self.parent().markerFunction()
-        self.close()
+        self.image = self.original_image
+        self.repaint()
 
     def fivePixel(self):
         self.brushSize = 5
@@ -95,7 +93,7 @@ class Marker(QMainWindow):
     def ninePixel(self):
         self.brushSize = 9
 
-    def fifeteenPixel(self):
+    def fifteenPixel(self):
         self.brushSize = 15
 
     def redColor(self):
